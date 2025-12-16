@@ -2221,8 +2221,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   target: {fileID: 1746398728}
   head: {fileID: 963140540}
-  distance: 0.9
-  heightOffset: -0.05
+  distance: 0.6
+  heightOffset: -0.2
 --- !u!1 &1178203356
 GameObject:
   m_ObjectHideFlags: 0
@@ -4196,7 +4196,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   posSource: {fileID: 1746398728}
   lookSource: {fileID: 963140540}
-  offset: {x: 0, y: -0.5, z: 0.1}
+  offset: {x: 0, y: 0.3, z: 0.1}
   posLerp: 8
   rotLerp: 10
   deadZoneDeg: 25
