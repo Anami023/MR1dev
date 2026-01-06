@@ -45,9 +45,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8d53d8384cebee943ba6985be68e24bd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  calendar: {fileID: 2422058554575038}
-  year: 2025
-  month: 10
 --- !u!114 &7659206232664814272
 MonoBehaviour:
   m_ObjectHideFlags: 0

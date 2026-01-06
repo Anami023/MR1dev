@@ -14,6 +14,8 @@ public class daymanager : MonoBehaviour
     public int year, month;
 
     public Material highlightring;
+    bool isCurrentMonth;
+
     // Start is called before the first frame update
     public void Start()
     {
@@ -21,6 +23,8 @@ public class daymanager : MonoBehaviour
     }
     public void GenerateDate(int year_in, int month_in)
     {
+        // ClearHighlight();
+
         year = year_in;
         month = month_in;
 
@@ -93,41 +97,113 @@ public class daymanager : MonoBehaviour
         {
             text.faceColor = new Color32(text.faceColor.r, text.faceColor.g, text.faceColor.b, 127);
         }
+        isCurrentMonth = !(last_month || next_month);
+
     }
+    // public void highlight(List<string[]> csvData)
+    // {
+    //     // ★ まず必ず消す
+    //     RemoveHighlightMaterial();
+
+    //     if (!isCurrentMonth) return;
+    //     if (csvData == null) return;
+
+    //     bool isToday = csvData.Any(row =>
+    //     {
+    //         if (row == null || row.Length < 2) return false;
+
+    //         if (DateTime.TryParseExact(
+    //                 row[1],
+    //                 "yyyy/MM/dd/HH:mm",
+    //                 null,
+    //                 System.Globalization.DateTimeStyles.None,
+    //                 out DateTime deadline))
+    //         {
+    //             return deadline.Date == today.Date;
+    //         }
+    //         return false;
+    //     });
+
+    //     if (!isToday) return;
+
+    //     // ここで付け直す
+    //     Renderer rend = GetComponent<Renderer>();
+    //     Material[] mats = rend.materials;
+
+    //     if (mats.Length == 1)
+    //     {
+    //         rend.materials = new Material[]
+    //         {
+    //             mats[0],
+    //             highlightring
+    //         };
+    //     }
+    // }
     public void highlight(List<string[]> csvData)
     {
+        Renderer rend = GetComponent<Renderer>();
+        if (rend == null) return;
 
+        var mats = new List<Material>(rend.materials);
 
-        if (csvData.Any(row =>
-        {
-            string raw = row[1];
-
-            if (DateTime.TryParseExact(
-                    raw,
-                    "yyyy/MM/dd/HH:mm",
-                    null,
-                    System.Globalization.DateTimeStyles.None,
-                    out DateTime deadline))
+        bool match =
+            csvData != null &&
+            csvData.Any(row =>
             {
-                return deadline.Date == today.Date;
-            }
+                if (row == null || row.Length < 2) return false;
 
-            return false;
-        }))
+                if (DateTime.TryParseExact(
+                        row[1],
+                        "yyyy/MM/dd/HH:mm",
+                        null,
+                        System.Globalization.DateTimeStyles.None,
+                        out DateTime deadline))
+                {
+                    return deadline.Date == today.Date;
+                }
+                return false;
+            });
+
+        // ===== ハイライト付与 =====
+        if (match)
         {
-            Renderer rend = this.GetComponent<Renderer>();
-
-            Material[] mats = rend.materials;
-            Material[] newMats = new Material[mats.Length + 1];
-
-            for (int i = 0; i < mats.Length; i++)
+            if (mats.Count == 1)
             {
-                newMats[i] = mats[i];
+                mats.Add(highlightring);   // ★必ず2番目
+                rend.materials = mats.ToArray();
             }
-
-            newMats[mats.Length] = highlightring;
-            rend.materials = newMats;
+        }
+        // ===== ハイライト除去 =====
+        else
+        {
+            if (mats.Count >= 2)
+            {
+                mats.RemoveAt(1);          // ★2番目を強制削除
+                rend.materials = mats.ToArray();
+            }
         }
 
+        //Debug.Log($"{name} {today:yyyy/MM/dd} match={match} mats={mats.Count}");
     }
+
+
+
+    void RemoveHighlightMaterial()
+    {
+        Renderer rend = GetComponent<Renderer>();
+        if (rend == null) return;
+
+        Material[] mats = rend.materials;
+
+        // マテリアルが2つ以上なら、2番目を削除
+        if (mats.Length >= 2)
+        {
+            Material[] newMats = new Material[1];
+            newMats[0] = mats[0];
+            rend.materials = newMats;
+        }
+    }
+
+
+
 }
