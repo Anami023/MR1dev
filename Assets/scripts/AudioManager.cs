@@ -21,6 +21,9 @@ public class AudioManager : MonoBehaviour
     [Header("ログ表示用（動作状況など）")]
     public TextMesh logText;
 
+    [Header("アニメーション制御")]
+    [SerializeField] private AnimationController animationController;
+
     WebSocket websocket;
 
     async void Start()
@@ -35,6 +38,20 @@ public class AudioManager : MonoBehaviour
         LogMessage("使用マイク：" + micName);
 
         audioSource = gameObject.AddComponent<AudioSource>();
+
+        // AnimationControllerの自動取得
+        if (animationController == null)
+        {
+            animationController = FindObjectOfType<AnimationController>();
+            if (animationController != null)
+            {
+                LogMessage("✓ AnimationControllerを自動検出しました");
+            }
+            else
+            {
+                LogMessage("⚠️ AnimationControllerが見つかりません");
+            }
+        }
 
         // WebSocket 初期化
         websocket = new WebSocket("ws://172.21.1.123:8000/ws");
@@ -216,6 +233,10 @@ public class AudioManager : MonoBehaviour
 
                 case "response":
                     LogMessage("💬 応答: " + response.response);
+
+                    // アニメーション制御を実行
+                    HandleMotionResponse(response);
+
                     if (resultText != null)
                     {
                         string display = "【応答】\n" + response.response;
@@ -245,6 +266,73 @@ public class AudioManager : MonoBehaviour
         {
             LogMessage("✗ JSON解析エラー: " + e.Message);
             LogMessage("受信データ: " + json.Substring(0, Math.Min(200, json.Length)));
+        }
+    }
+
+    // モーション情報に基づいてアニメーションを実行
+    private void HandleMotionResponse(ServerResponse response)
+    {
+        if (animationController == null)
+        {
+            LogMessage("⚠️ AnimationControllerが設定されていません");
+            return;
+        }
+
+        if (string.IsNullOrEmpty(response.motion))
+        {
+            LogMessage("ℹ️ モーション情報なし");
+            return;
+        }
+
+        LogMessage($"🎭 モーション実行: {response.motion}");
+
+        // モーションの種類に応じてアニメーションを実行
+        switch (response.motion.ToLower())
+        {
+            case "happy":
+            case "joy":
+            case "excited":
+                animationController.TriggerInterruptAnimation();
+                LogMessage("😊 喜びのアニメーションを実行");
+                break;
+
+            case "sad":
+            case "disappointed":
+                animationController.TriggerInterruptAnimation();
+                LogMessage("😢 悲しみのアニメーションを実行");
+                break;
+
+            case "thinking":
+            case "confused":
+                animationController.TriggerInterruptAnimation();
+                LogMessage("🤔 考え中のアニメーションを実行");
+                break;
+
+            case "greeting":
+            case "hello":
+                animationController.TriggerInterruptAnimation();
+                LogMessage("👋 挨拶のアニメーションを実行");
+                break;
+
+            default:
+                // その他のモーションも一律で割り込みアニメーションを実行
+                animationController.TriggerInterruptAnimation();
+                LogMessage($"🎬 '{response.motion}' アニメーションを実行");
+                break;
+        }
+
+        // classification情報もログに出力
+        if (response.classification != null)
+        {
+            LogMessage($"📋 分類: {response.classification.category}");
+            if (!string.IsNullOrEmpty(response.classification.title))
+            {
+                LogMessage($"   タイトル: {response.classification.title}");
+            }
+            if (!string.IsNullOrEmpty(response.classification.datetime_iso))
+            {
+                LogMessage($"   日時: {response.classification.datetime_iso}");
+            }
         }
     }
 
@@ -327,7 +415,7 @@ public class AudioManager : MonoBehaviour
         {
             string timestamp = DateTime.Now.ToString("HH:mm:ss");
             logText.text = $"[{timestamp}] {message}\n" + logText.text;
-            
+
             string[] lines = logText.text.Split('\n');
             if (lines.Length > 15)
             {
@@ -378,19 +466,21 @@ public class ServerResponse
     public string text;           // transcription用
     public string transcribed;    // response用の文字起こしテキスト
     public string response;       // response用の応答テキスト
+    public string motion;         // モーション指定（追加）
     public string timestamp;      // タイムスタンプ
     public string server_time;    // サーバー時刻
-    
-    // classification は複雑なのでここでは省略
-    // 必要なら ClassificationData クラスを作成
+
+    public ClassificationData classification;  // 分類情報（追加）
 }
 
 [Serializable]
 public class ClassificationData
 {
+    public string category;       // "add_schedule" など
+    public string title;          // イベントのタイトル
+    public string datetime_iso;   // ISO形式の日時
     public string text;
-    public string category;
-    public string @event;  // C#の予約語なので @ をつける
+    public string @event;         // C#の予約語なので @ をつける
     public string date;
     public string time;
 }
